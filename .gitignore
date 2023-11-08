@@ -1,0 +1,22 @@
+# Ignore credentials file
+# Ignore authentication credentials
+credentials.json
+token.json
+
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore Python byte-compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment
+venv/
+.env
+
+# Ignore other sensitive files
+secret_folder/
+*.pem
