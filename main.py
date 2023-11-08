@@ -32,6 +32,21 @@ def get_service():
 
 import time
 
+def modify_message(service, user_id, message_id):
+    for attempt in range(5):  # retry up to 5 times
+        try:
+            service.users().messages().modify(
+                userId=user_id, 
+                id=message_id, 
+                body={'removeLabelIds': ['UNREAD']}
+            ).execute()
+            return
+        except googleapiclient.errors.HttpError as error:
+            if error.resp.status in [502, 503, 504]:  # check if error is 502, 503 or 504
+                time.sleep((2 ** attempt) + random.random())  # exponential backoff with jitter
+            else:
+                raise
+
 def main():
     start_time = time.time()  # Record the start time
 
@@ -58,14 +73,12 @@ def main():
                 print(f"Retrieved {len(messages)} messages in page {request_count + 1}. Marking messages as read...")
                 total_marked += len(messages)
                 for message in messages:
-                    service.users().messages().modify(
-                        userId='me', 
-                        id=message['id'], 
-                        body={'removeLabelIds': ['UNREAD']}
-                    ).execute()
+                    modify_message(service, 'me', message['id'])
                 
                 request_count += 1
-                print(f"Finished page {request_count}. Total messages marked as read so far: {total_marked}")
+                end_time = time.time() # Record the end time
+                time_spent = end_time - start_time  # Calculate the total time spent
+                print(f"Finished page {request_count}. Total messages marked as read so far: {total_marked} \n Time Spent: {time_spent:.2f}")
             
             page_token = results.get('nextPageToken')
             if not page_token:
