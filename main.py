@@ -2,7 +2,9 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from googleapiclient import errors
 import os.path
+import random
 import time
 
 # If modifying these SCOPES, delete the file token.json.
@@ -41,11 +43,14 @@ def modify_message(service, user_id, message_id):
                 body={'removeLabelIds': ['UNREAD']}
             ).execute()
             return
-        except googleapiclient.errors.HttpError as error:
+        except errors.HttpError as error:
             if error.resp.status in [502, 503, 504]:  # check if error is 502, 503 or 504
                 time.sleep((2 ** attempt) + random.random())  # exponential backoff with jitter
             else:
                 raise
+
+
+
 
 def main():
     start_time = time.time()  # Record the start time
