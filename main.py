@@ -33,16 +33,16 @@ def get_service():
 import time
 
 def main():
+    start_time = time.time()  # Record the start time
+
     service = get_service()
 
-    # Start with an empty page token
     page_token = None
     total_marked = 0
-    request_count = 0  # Keep track of the number of API requests made
+    request_count = 0
 
-    while True:
-        try:
-            # Call the Gmail API to fetch INBOX
+    try:
+        while True:
             results = service.users().messages().list(
                 userId='me',
                 labelIds=['INBOX'],
@@ -58,32 +58,30 @@ def main():
                 print(f"Retrieved {len(messages)} messages in page {request_count + 1}. Marking messages as read...")
                 total_marked += len(messages)
                 for message in messages:
-                    # Mark them as read
                     service.users().messages().modify(
                         userId='me', 
                         id=message['id'], 
                         body={'removeLabelIds': ['UNREAD']}
                     ).execute()
-                    print(f"Message {message['id']} marked as read.")
                 
-                # Increment the request count
                 request_count += 1
                 print(f"Finished page {request_count}. Total messages marked as read so far: {total_marked}")
             
-            # Update the page token
             page_token = results.get('nextPageToken')
             if not page_token:
                 print("No more pages left to process.")
                 break
 
-            # Pause for a moment to prevent hitting rate limits
-            time.sleep(1)  # Sleep for 1 second; adjust as necessary based on your rate limit status
+            time.sleep(1)  # Sleep for 1 second to avoid rate limits
             
-        except Exception as e:
-            print("An error occurred:", e)
-            break
+    except Exception as e:
+        print("An error occurred:", e)
 
+    end_time = time.time()  # Record the end time
+    time_spent = end_time - start_time  # Calculate the total time spent
     print(f"Total messages marked as read: {total_marked}")
+    print(f"Total time spent: {time_spent:.2f} seconds")
 
 if __name__ == '__main__':
     main()
+
