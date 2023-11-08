@@ -32,8 +32,6 @@ def get_service():
     service = build('gmail', 'v1', credentials=creds)
     return service
 
-import time
-
 def modify_message(service, user_id, message_id):
     for attempt in range(5):  # retry up to 5 times
         try:
@@ -48,9 +46,6 @@ def modify_message(service, user_id, message_id):
                 time.sleep((2 ** attempt) + random.random())  # exponential backoff with jitter
             else:
                 raise
-
-
-
 
 def main():
     start_time = time.time()  # Record the start time
