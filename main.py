@@ -3,6 +3,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import os.path
+import time
 
 # If modifying these SCOPES, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
@@ -29,19 +30,60 @@ def get_service():
     service = build('gmail', 'v1', credentials=creds)
     return service
 
+import time
+
 def main():
     service = get_service()
-    # Call the Gmail API to fetch INBOX
-    results = service.users().messages().list(userId='me', labelIds=['INBOX'], q="is:unread").execute()
-    messages = results.get('messages', [])
 
-    if not messages:
-        print("No unread messages found.")
-    else:
-        print(f"Marking {len(messages)} messages as read.")
-        for message in messages:
-            # Mark them as read
-            service.users().messages().modify(userId='me', id=message['id'], body={'removeLabelIds': ['UNREAD']}).execute()
+    # Start with an empty page token
+    page_token = None
+    total_marked = 0
+    request_count = 0  # Keep track of the number of API requests made
+
+    while True:
+        try:
+            # Call the Gmail API to fetch INBOX
+            results = service.users().messages().list(
+                userId='me',
+                labelIds=['INBOX'],
+                q="is:unread",
+                pageToken=page_token
+            ).execute()
+            
+            messages = results.get('messages', [])
+            if not messages:
+                print("No more unread messages found.")
+                break
+            else:
+                print(f"Retrieved {len(messages)} messages in page {request_count + 1}. Marking messages as read...")
+                total_marked += len(messages)
+                for message in messages:
+                    # Mark them as read
+                    service.users().messages().modify(
+                        userId='me', 
+                        id=message['id'], 
+                        body={'removeLabelIds': ['UNREAD']}
+                    ).execute()
+                    print(f"Message {message['id']} marked as read.")
+                
+                # Increment the request count
+                request_count += 1
+                print(f"Finished page {request_count}. Total messages marked as read so far: {total_marked}")
+            
+            # Update the page token
+            page_token = results.get('nextPageToken')
+            if not page_token:
+                print("No more pages left to process.")
+                break
+
+            # Pause for a moment to prevent hitting rate limits
+            time.sleep(1)  # Sleep for 1 second; adjust as necessary based on your rate limit status
+            
+        except Exception as e:
+            print("An error occurred:", e)
+            break
+
+    print(f"Total messages marked as read: {total_marked}")
 
 if __name__ == '__main__':
     main()
