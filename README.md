@@ -1,4 +1,4 @@
-# ReadAllGmail - Generated in collaboration with ChatGPT - This may become a backend for a chrome extension in the future.
+# ReadAllGmail - Generated in collaboration with ChatGPT.
 This utility script is designed to mark unread emails as read in your Gmail account using Python and Google's Gmail API. Please follow the setup instructions carefully before running the script.
 
 ## Prerequisites
